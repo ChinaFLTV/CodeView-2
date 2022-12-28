@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="CodeView">
+        <attr name="mode" format="string"/>
+        <attr name="beautify" format="boolean" />
+        <attr name="read_only" format="boolean" />
+        <attr name="wrap_lines" format="boolean" />
+    </declare-styleable>
+
+</resources>

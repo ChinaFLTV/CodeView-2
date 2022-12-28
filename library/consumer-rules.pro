@@ -1,0 +1,1 @@
+-keepnames class com.elmurzaev.codeview.**
