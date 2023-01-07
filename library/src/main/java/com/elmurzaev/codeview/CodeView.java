@@ -28,6 +28,9 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
+import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebView;
@@ -49,12 +52,14 @@ public class CodeView extends WebView {
     private boolean mWrapLines = false;
     @Nullable
     private EventListener mEventListener;
+    @Nullable
+    private ValueCallback<String> mValueCallback;
 
     public CodeView(@NonNull Context context) {
         this(context, null);
     }
 
-    public CodeView(@NonNull Context context, @Nullable AttributeSet attrs) {
+    public CodeView(@NonNull final Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
         if (attrs != null) {
@@ -75,10 +80,40 @@ public class CodeView extends WebView {
                         WebSettingsCompat.DARK_STRATEGY_PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING);
             }
         }
+        setOnTouchListener(new View.OnTouchListener() {
+            private final ScaleGestureDetector mDetector =
+                    new ScaleGestureDetector(context, new GestureListener());
+
+            @Override
+            public boolean onTouch(View v, MotionEvent motionEvent) {
+                mDetector.onTouchEvent(motionEvent);
+                return false;
+            }
+        });
         setWebViewClient(new WebClient());
         getSettings().setJavaScriptEnabled(true);
         addJavascriptInterface(new JsInterface(), "Client");
         loadUrl("file:///android_asset/codeview/editor.html");
+    }
+
+    public int getFontSize() {
+        return getSettings().getDefaultFixedFontSize();
+    }
+
+    public void setFontSize(int fontSize) {
+        getSettings().setDefaultFixedFontSize(fontSize);
+    }
+
+    public void undo() {
+        evaluateJavascript("editor.execCommand('undo')", null);
+    }
+
+    public void redo() {
+        evaluateJavascript("editor.execCommand('redo')", null);
+    }
+
+    public void find() {
+        evaluateJavascript("editor.execCommand('findPersistent')", null);
     }
 
     @NonNull
@@ -126,10 +161,23 @@ public class CodeView extends WebView {
     }
 
     public void getCode(ValueCallback<String> callback) {
-        evaluateJavascript("editor.getValue()", callback);
+        mValueCallback = callback;
+        evaluateJavascript("Client.onReceiveResult(editor.getValue())", null);
     }
 
     private class JsInterface {
+
+        @JavascriptInterface
+        public void onReceiveResult(final String result) {
+            post(new Runnable() {
+                @Override
+                public void run() {
+                    if (mValueCallback != null) {
+                        mValueCallback.onReceiveValue(result);
+                    }
+                }
+            });
+        }
 
         @JavascriptInterface
         public String getCode() {
@@ -183,6 +231,23 @@ public class CodeView extends WebView {
     public interface EventListener {
 
         void onLoaded();
+
+    }
+
+    private class GestureListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+
+        int mScale = 100;
+
+        @Override
+        public boolean onScale(@NonNull ScaleGestureDetector detector) {
+            mScale += detector.getCurrentSpan() > detector.getPreviousSpan() ? 1 : -1;
+            mScale = Math.max(70, Math.min(mScale, 130));
+
+            if (getSettings().getTextZoom() != mScale) {
+                getSettings().setTextZoom(mScale);
+            }
+            return super.onScale(detector);
+        }
 
     }
 

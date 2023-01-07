@@ -2,20 +2,30 @@ package com.elmurzaev.codeview;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
+import android.webkit.ValueCallback;
 
 public class MainActivity extends Activity {
+
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        CodeView codeView = findViewById(R.id.code_view);
+        final CodeView codeView = findViewById(R.id.code_view);
         codeView.setCode(mExampleHtml);
         codeView.setEventListener(new CodeView.EventListener() {
             @Override
             public void onLoaded() {
                 // hide progress bar etc.
+                codeView.getCode(new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String value) {
+                        Log.d(TAG, "onLoaded: " + value);
+                    }
+                });
             }
         });
     }
