@@ -66,9 +66,9 @@ public class CodeView extends WebView {
             TypedArray array = context.getTheme().obtainStyledAttributes(
                     attrs, R.styleable.CodeView, 0, 0);
             mMode = array.getString(R.styleable.CodeView_mode);
-            mBeautify = array.getBoolean(R.styleable.CodeView_beautify, true);
-            mReadOnly = array.getBoolean(R.styleable.CodeView_read_only, true);
-            mWrapLines = array.getBoolean(R.styleable.CodeView_wrap_lines, true);
+            mBeautify = array.getBoolean(R.styleable.CodeView_beautify, mBeautify);
+            mReadOnly = array.getBoolean(R.styleable.CodeView_read_only, mReadOnly);
+            mWrapLines = array.getBoolean(R.styleable.CodeView_wrap_lines, mWrapLines);
             array.recycle();
         }
         if (isDarkMode()) {
